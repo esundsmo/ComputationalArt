@@ -2,14 +2,14 @@
 
     Generates random computer art using recursive functions to develop random functions that red blue and green colours are mapped to.
     Does not require input. May change image size via test_image() inputs.
-    Current colour function depth ranges 7:9, can change these values by making appropriate changes to build_random_function() and evaluate_random_function().
+    Current colour function depth ranges; can change these values by making appropriate changes to build_random_function().
 
     Thanks to Rebecca Patterson for clarifying how to use recursion in the function building process!!! :)
 
     Note: excessive doctesting was foregone in favor of checking mathematical logic by hand/calculator/computer
 
 
-    @author: Elizabeth Sundsmo  2/16/16
+    @author: Elizabeth Sundsmo  4/19/16
 """
 
 import random
@@ -30,66 +30,42 @@ def build_random_function(min_depth, max_depth):
 
         --------No doctests because this function relies on random!!--------
     """
-    functions = ["x", "y", "pwr3", "pwr4", "cos_pi", "sin_pi", "avg", "prod"]#, "circ"]
-    
+    functions = {
+                "x":  lambda x: x,
+                "y":  lambda y: y,
+                "pwr3":   lambda x: x**3,
+                "pwr4":   lambda x: x**4,
+                "cos_pi":   lambda x: math.cos(math.pi*x),
+                "sin_pi":   lambda x: math.sin(math.pi*x),
+                "avg":   lambda a, b: (a+b)/2,
+                "prod":  lambda a, b: a*b
+                } 
+    function_inputs = {"x": 0,"y": 0,"pwr3":1,"pwr4":1,"cos_pi":1,"sin_pi":1,"avg":2,"prod":2}
+    func_names = function_inputs.keys()
+
+    #Determine which functions are usable given current depth
     if max_depth==1: #if 1 before max depth, final function w/o inputs to make stop
-        return functions[random.randint(0,1)]
-
+        possible = [f for f in func_names if function_inputs[f]==0]
+        chosen = random.choice(possible)
     elif min_depth > 0: #hasn't reached min depth yet-- keep going! (min deepth can be negative!)
-        index = random.randint(2,7)
-        if index < 6:
-            # print [index, functions[index]]
-            return [functions[index], build_random_function(min_depth-1, max_depth-1)]
-        else:
-            # print [index, functions[index]]
-            return [functions[index], build_random_function(min_depth-1, max_depth-1), build_random_function(min_depth-1, max_depth-1)]
-
+        possible = [f for f in func_names if function_inputs[f]>0]
+        chosen = random.choice(possible)
     else: #btwn min and max! Take your pick!
-        index = random.randint(0,7)
-        if index < 2:
-            # print [index, functions[index]]
-            return [functions[index]]
-        elif index > 5:
-            print [index, functions[index]]
-            return [functions[index], build_random_function(min_depth-1, max_depth-1), build_random_function(min_depth-1, max_depth-1)]
-        else:
-            # print [index, functions[index]]
-            return [functions[index], build_random_function(min_depth-1, max_depth-1)]
-   
-def evaluate_random_function(f, x, y):
-    """ Evaluate the random function f with inputs x,y
-        Representation of the function f is defined in the assignment writeup
+        chosen = random.choice(func_names)
 
-        f: the function to evaluate
-        x: the value of x to be used to evaluate the function
-        y: the value of y to be used to evaluate the function
-        returns: the function value
+    fn = functions[chosen]
 
-        >>> evaluate_random_function(["x"],-0.5, 0.75)
-        -0.5
-        >>> evaluate_random_function(["y"],0.1,0.02)
-        0.02
+    #Check chosen function input requirements and build function
+    if function_inputs[chosen] == 0:
+        return fn
+    elif function_inputs[chosen] == 1:
+        args=[build_random_function(min_depth-1, max_depth-1)]
+    else:
+        args=[ build_random_function(min_depth-1, max_depth-1), 
+               build_random_function(min_depth-1, max_depth-1) ] 
 
-        -------Can't write doctests beyond first two conditional because relies on random!-------
-    """
-    if f[0] == "x":
-        return x
-    elif f[0] == "y":
-        return y
-    elif f[0] == "sin_pi":
-        return math.sin(math.pi*evaluate_random_function(f[1], x, y))
-    elif f[0] == "cos_pi":
-        return math.cos(math.pi*evaluate_random_function(f[1], x, y))
-    elif f[0] == "avg":
-        return 0.5*((evaluate_random_function(f[1], x, y) + evaluate_random_function(f[2], x, y)))
-    elif f[0] == "prod":
-        return evaluate_random_function(f[1], x, y) * evaluate_random_function(f[2], x, y)
-    elif f[0] == "pwr4":
-        return evaluate_random_function(f[1], x, y)**4
-    # elif f[0] == "circ":
-    #     return (math.sqrt(evaluate_random_function(f[1], x, y)**2 + evaluate_random_function(f[1], x, y)**2)) - 1
-    elif f[0] == "pwr3":
-        return evaluate_random_function(f[1], x, y)**3
+    #Return built function
+    return lambda x,y: fn(*[arg(x, y) for arg in args])
 
 def remap_interval(val,input_interval_start,input_interval_end,output_interval_start,output_interval_end):
     """ Given an input value in the interval [input_interval_start,
@@ -114,16 +90,10 @@ def remap_interval(val,input_interval_start,input_interval_end,output_interval_s
         >>> remap_interval(5, 4, 6, 1, 2)
         1.5
     """
-    # num = (float(val - input_interval_start) * float(output_interval_end - output_interval_start)) 
-    # denom = float(input_interval_end - input_interval_start) 
-    # scaled_val = (num/denom)+ output_interval_start
-    # return scaled_val
-
-    interval_1= input_interval_end- input_interval_start
-    interval_2= output_interval_end- output_interval_start
-    value_1= float((val-input_interval_start))/interval_1
-    value_2= value_1*interval_2+ output_interval_start
-    return value_2
+    num = (float(val - input_interval_start) * float(output_interval_end - output_interval_start)) 
+    denom = float(input_interval_end - input_interval_start) 
+    scaled_val = (num/denom)+ output_interval_start
+    return scaled_val
 
 def color_map(val):
     """ Maps input value between -1 and 1 to an integer 0-255, suitable for
@@ -144,7 +114,6 @@ def color_map(val):
     color_code = remap_interval(val, -1, 1, 0, 255)
     return int(color_code)
 
-
 def test_image(filename, x_size=350, y_size=350):
     """ Generate test image with random pixels and save as an image file.
 
@@ -162,7 +131,6 @@ def test_image(filename, x_size=350, y_size=350):
                             random.randint(0, 255),  # Green channel
                             random.randint(0, 255))  # Blue channel
     im.save(filename)
-
 
 def generate_art(filename, x_size=350, y_size=350):
     """ Generate computational art and save as an image file.
@@ -183,11 +151,10 @@ def generate_art(filename, x_size=350, y_size=350):
             x = remap_interval(i, 0, x_size, -1, 1)
             y = remap_interval(j, 0, y_size, -1, 1)
             pixels[i, j] = ( 
-                    color_map(evaluate_random_function(red_function, x, y)),
-                    color_map(evaluate_random_function(green_function, x, y)),
-                    color_map(evaluate_random_function(blue_function, x, y))   )
+                    color_map(red_function(x, y)),
+                    color_map(green_function(x, y)),
+                    color_map(blue_function(x, y))   )
     im.save(filename)
-
 
 if __name__ == '__main__':
     # import doctest
@@ -202,6 +169,3 @@ if __name__ == '__main__':
   # Test that PIL is installed correctly
     # TODO: Comment or remove this function call after testing PIL install
     #test_image("noise.png")
-
-  # Create a movie!
-    # generate_art("frame{}".format)()
